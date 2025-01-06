@@ -1,0 +1,5 @@
+﻿2.3.2
+Changelog:
+-Fixed glTF2 WebGL out-of-memory error.
+-Added coroutine meshes loading.
+-Added MaxCoroutineDelayInMS asset loader option. Use this field to set a maximum of milliseconds a Coroutine can take without waiting for a main thread frame to execute.

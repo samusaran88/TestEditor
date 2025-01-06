@@ -1,0 +1,1 @@
+Documentation: https://rteditor.battlehub.net/manual/vtv.html
