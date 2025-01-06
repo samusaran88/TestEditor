@@ -132,7 +132,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 798b323d69f6dcc4d8a84cee4904a58d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8f099b112fe8d6f4d977c3092fd6ff91, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -185,7 +185,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3052073307185575534}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 4015588128209844106}
+        m_TargetAssemblyTypeName: ScrollItemUI, Assembly-CSharp
+        m_MethodName: ToggleExpandCollapse
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &2206521937870731251
 GameObject:
   m_ObjectHideFlags: 0
@@ -670,8 +682,8 @@ MonoBehaviour:
   img: {fileID: 8523083271074557203}
   expandButton: {fileID: 459961761490458298}
   paddingRT: {fileID: 1659788767784672500}
-  spriteExpand: {fileID: 0}
-  spriteClose: {fileID: 0}
+  spriteExpanded: {fileID: 21300000, guid: 794db7863e6df16419c2faf426769dde, type: 3}
+  spriteCollapsed: {fileID: 21300000, guid: 8f099b112fe8d6f4d977c3092fd6ff91, type: 3}
 --- !u!1 &6795736773272050223
 GameObject:
   m_ObjectHideFlags: 0

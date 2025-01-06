@@ -10,17 +10,18 @@ public class ScrollItemUI : MonoBehaviour
     public Image img;
     public Button expandButton;
     public RectTransform paddingRT;
-    public Sprite spriteExpand;
-    public Sprite spriteClose;
+    public Sprite spriteExpanded;
+    public Sprite spriteCollapsed;
     private HierarchyItem currentItem; 
     public int SetItemData(HierarchyItem item)
     {
         currentItem = item;
         nameText.text = item.Name;
+        currentItem.IsExpanded = item.IsExpanded;
+        expandButton.image.sprite = currentItem.IsExpanded == true ? spriteExpanded : spriteCollapsed;
+
         float width = nameText.GetComponent<RectTransform>().sizeDelta.x + img.GetComponent<RectTransform>().sizeDelta.x;
         float paddingSize = item.layerNum * expandButton.GetComponent<RectTransform>().sizeDelta.x;
-        width += paddingSize;
-        paddingRT.sizeDelta = new Vector2(paddingSize, paddingRT.sizeDelta.y);
         if (item.Children.Count > 0)
         {
             expandButton.gameObject.SetActive(true);
@@ -29,14 +30,18 @@ public class ScrollItemUI : MonoBehaviour
         else
         {
             expandButton.gameObject.SetActive(false);
+            paddingSize += expandButton.GetComponent<RectTransform>().sizeDelta.x;
         }
+        width += paddingSize;
+        paddingRT.sizeDelta = new Vector2(paddingSize, paddingRT.sizeDelta.y);
         return Mathf.RoundToInt(width);
         //RectTransform rectTransform = GetComponent<RectTransform>();
         //rectTransform.anchoredPosition = new Vector2(20 * depth, rectTransform.anchoredPosition.y);
     } 
-    private void ToggleExpandCollapse()
+    public void ToggleExpandCollapse()
     {
-        currentItem.IsExpanded = !currentItem.IsExpanded; 
+        currentItem.IsExpanded = !currentItem.IsExpanded;
+        expandButton.image.sprite = currentItem.IsExpanded == true ? spriteExpanded : spriteCollapsed;
     }
 }
 public class HierarchyItem
