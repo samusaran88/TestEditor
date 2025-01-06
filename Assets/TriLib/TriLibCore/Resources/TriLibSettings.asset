@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TriLibSettings
   m_EditorClassIdentifier: 
   _dictionaryBoolKeys:
-  - StandardMaterialMapper
+  - UniversalRPMaterialMapper
   - 
   - 
   - 

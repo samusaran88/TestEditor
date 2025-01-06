@@ -32,7 +32,10 @@ public class ObjectPool<T> where T : MonoBehaviour
             return obj;
         }
     }
-
+    public IEnumerable<T> GetAll()
+    {
+        return pool.ToArray();
+    }
     public void ReturnToPool(T obj)
     {
         obj.gameObject.SetActive(false);

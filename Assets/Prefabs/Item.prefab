@@ -679,11 +679,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nameText: {fileID: 197987882297848403}
-  img: {fileID: 8523083271074557203}
+  iconImage: {fileID: 8523083271074557203}
   expandButton: {fileID: 459961761490458298}
   paddingRT: {fileID: 1659788767784672500}
   spriteExpanded: {fileID: 21300000, guid: 794db7863e6df16419c2faf426769dde, type: 3}
   spriteCollapsed: {fileID: 21300000, guid: 8f099b112fe8d6f4d977c3092fd6ff91, type: 3}
+  onClickSingle:
+    m_PersistentCalls:
+      m_Calls: []
+  onClickMultiple:
+    m_PersistentCalls:
+      m_Calls: []
+  selectedColor: {r: 1, g: 0, b: 0, a: 0.19607843}
 --- !u!1 &6795736773272050223
 GameObject:
   m_ObjectHideFlags: 0
@@ -696,7 +703,7 @@ GameObject:
   - component: {fileID: 5193183312611458682}
   - component: {fileID: 8523083271074557203}
   m_Layer: 5
-  m_Name: Image
+  m_Name: IconImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
