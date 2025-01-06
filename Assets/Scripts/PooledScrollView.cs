@@ -87,7 +87,7 @@ public class PooledScrollView : MonoBehaviour
         int startIndex = Mathf.Clamp(currentIndex, 0, data.Count - 1);
         int endIndex = Mathf.Clamp(currentIndex + visibleItemCount, 0, data.Count);
 
-        int maxWidth = Mathf.RoundToInt(scrollRect.GetComponent<RectTransform>().sizeDelta.x);
+        int maxWidth = Mathf.RoundToInt(scrollRect.GetComponent<RectTransform>().sizeDelta.x) - 20;
         for (int i = startIndex; i < endIndex; i++)
         {
             ScrollItemUI itemUI = pool.Get();
@@ -95,13 +95,13 @@ public class PooledScrollView : MonoBehaviour
             if (w > maxWidth) maxWidth = w;
             itemUI.transform.SetParent(content, false);
 
-            float yPos = - (i + 1) * itemHeight; 
+            float yPos = -((float)i + 0.5f) * itemHeight; 
             itemUI.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, yPos);
 
             activeItems.Add(itemUI);
         }
 
-        content.sizeDelta = new Vector2(maxWidth, (data.Count + 1) * itemHeight);  // Set content height.
+        content.sizeDelta = new Vector2(maxWidth, data.Count * itemHeight);  // Set content height.
         Debug.Log(maxWidth);
     }
 }
