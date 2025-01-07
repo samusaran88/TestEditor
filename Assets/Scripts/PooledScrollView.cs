@@ -1,14 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.UIElements;
+using System.Linq;
 
 public class PooledScrollView : MonoBehaviour
 {
     public RectTransform content;       // Content RectTransform of the ScrollView.
-    public ScrollRect scrollRect;       // ScrollRect component.
+    public CustomScrollRect scrollRect;       // ScrollRect component.
     public GameObject itemPrefab;       // Prefab for scroll items.
+    public GameObject itemPopup;
+    public Canvas canvas;
+
     private ObjectPool<ScrollItemUI> pool;  // Pool for UI items.
     private List<HierarchyItem> data = new List<HierarchyItem>();   // The list of hierarchy items.
     private HierarchyItem root = new HierarchyItem("Root");
@@ -21,18 +23,15 @@ public class PooledScrollView : MonoBehaviour
     private int currentIndex = -1;       // The index of the first visible item. 
 
     private void Start()
-    { 
+    {
+        canvas = GetComponentInParent<Canvas>();
         //스크롤 뷰에 사용될 오브젝트 풀을 미리 20개 생성
-        pool = new ObjectPool<ScrollItemUI>(itemPrefab.GetComponent<ScrollItemUI>(), 20);
-        //각 아이템에 온클릭 콜백 할당
-        foreach (var itemUI in pool.GetAll())
-        {
-            itemUI.onClickSingle.AddListener(OnSelectSingle);
-            itemUI.onClickMultiple.AddListener(OnSelectMultiple);
-            itemUI.onToggleExpand.AddListener(OnToggleExpand);
-        }
+        pool = new ObjectPool<ScrollItemUI>(itemPrefab.GetComponent<ScrollItemUI>(), 20); 
         //스크롤뷰의 값이 변할때마다 내용물 갱신해주는 함수 콜백 추가
         scrollRect.onValueChanged.AddListener(OnScrollValueChanged);
+        scrollRect.setToChildItem.AddListener(SetToChildItem);
+        scrollRect.setToPriorSiblingItem.AddListener(SetToPriorSiblingItem);
+        scrollRect.setToNextSiblingItem.AddListener(SetToNextSiblingItem);
         //아이템 하나당 높이값 저장
         itemHeight = itemPrefab.GetComponent<RectTransform>().rect.height; 
         //뷰포트에 몇개의 아이템이 보이는지 한개의 여유분을 두고 계산
@@ -58,12 +57,15 @@ public class PooledScrollView : MonoBehaviour
         tempChild = new HierarchyItem("Item" + i++);
         tempParent.AddChild(tempChild);
         tempParent = tempChild;
-        tempChild = new HierarchyItem("Item" + i++);
-        tempParent.AddChild(tempChild);
-        tempChild = new HierarchyItem("Item" + i++);
-        tempParent.AddChild(tempChild);
-        tempChild = new HierarchyItem("Item" + i++);
-        tempParent.AddChild(tempChild);
+        for (int k = 0; k < 1000; k++)
+        {
+            tempChild = new HierarchyItem("Item" + i++);
+            tempParent.AddChild(tempChild);
+        }
+        //tempChild = new HierarchyItem("Item" + i++);
+        //tempParent.AddChild(tempChild);
+        //tempChild = new HierarchyItem("Item" + i++);
+        //tempParent.AddChild(tempChild);
         SetData();
     }
     public void SetData()
@@ -108,11 +110,11 @@ public class PooledScrollView : MonoBehaviour
         int startIndex = Mathf.Clamp(currentIndex, 0, data.Count - 1);
         int endIndex = Mathf.Clamp(currentIndex + visibleItemCount, 0, data.Count);
 
-        int maxWidth = Mathf.RoundToInt(scrollRect.GetComponent<RectTransform>().sizeDelta.x) - 20;
+        int maxWidth = Mathf.RoundToInt(scrollRect.GetComponent<RectTransform>().sizeDelta.x);
         for (int i = startIndex; i < endIndex; i++)
         {
             HierarchyItem item = data[i];
-            ScrollItemUI itemUI = pool.Get();
+            ScrollItemUI itemUI = GetItemUI();
             int w = itemUI.SetItemData(item);
             itemUI.SetSelected(selectedItems); 
             if (w > maxWidth) maxWidth = w;
@@ -126,18 +128,73 @@ public class PooledScrollView : MonoBehaviour
 
         content.sizeDelta = new Vector2(maxWidth, data.Count * itemHeight);  // Set content height. 
     }
+    private ScrollItemUI GetItemUI()
+    {
+        ScrollItemUI itemUI = pool.Get();
+        itemUI.onClickSingle.RemoveAllListeners();
+        itemUI.onClickSingle.AddListener(OnSelectSingle);
+        itemUI.onClickAddSingle.RemoveAllListeners();
+        itemUI.onClickAddSingle.AddListener(OnSelectAnother);
+        itemUI.onClickMultiple.RemoveAllListeners();
+        itemUI.onClickMultiple.AddListener(OnSelectMultiple);
+        itemUI.onToggleExpand.RemoveAllListeners();
+        itemUI.onToggleExpand.AddListener(OnToggleExpand);
+        //itemUI.onDragStart.RemoveAllListeners();
+        //itemUI.onDragStart.AddListener(OnDragStart);
+        //itemUI.onDragEnd.RemoveAllListeners();
+        //itemUI.onDragEnd.AddListener(OnDragEnd);
+        //itemUI.onScroll.RemoveAllListeners();
+        //itemUI.onScroll.AddListener(scrollRect.OnScroll);
+        return itemUI;
+    }
     public void OnSelectSingle(HierarchyItem item)
     { 
-        selectedItems.Clear();
-        selectedItems.Add(item);
+        if (selectedItems.Count == 1 && selectedItems[0] == item)
+        {
+            selectedItems.Clear(); 
+        }
+        else
+        {
+            selectedItems.Clear();
+            selectedItems.Add(item);
+        }
+        foreach (var itemUI in activeItems)
+        {
+            itemUI.SetSelected(selectedItems);
+        }
+    }
+    public void OnSelectAnother(HierarchyItem item)
+    {
+        if (selectedItems.Count == 1 && selectedItems[0] == item)
+        {
+            selectedItems.Clear(); 
+        }
+        else if (selectedItems.Count > 1 && selectedItems.Contains(item))
+        {
+            selectedItems.Remove(item);
+        }
+        else
+        { 
+            selectedItems.Add(item); 
+        } 
         foreach (var itemUI in activeItems)
         {
             itemUI.SetSelected(selectedItems);
         }
     }
     public void OnSelectMultiple(HierarchyItem item)
-    { 
-        selectedItems.Add(item);
+    {
+        int lowestIndex = data
+            .Select((data, index) => new { data, index })
+            .Where(pair => selectedItems.Contains(pair.data))
+            .Min(pair => pair.index);
+        int currentIndex = data.FindIndex(x => x == item);
+        for (int i = lowestIndex; i <= currentIndex; i++)
+        {
+            HierarchyItem tempItem = data[i];
+            if (!selectedItems.Contains(tempItem))
+                selectedItems.Add(tempItem);
+        }
         foreach (var itemUI in activeItems)
         {
             itemUI.SetSelected(selectedItems);
@@ -147,5 +204,132 @@ public class PooledScrollView : MonoBehaviour
     {
         currentIndex = -1;
         SetData();
+    }
+    public void OnDragStart(HierarchyItem item)
+    {
+        // Disable the scroll when popup is active
+        scrollRect.enabled = false; 
+
+        // Set popup as selected (focus)
+        //EventSystem.current.SetSelectedGameObject(itemPopup);
+
+        // Enable popup
+        //itemPopup.SetActive(true);
+    }
+    public void OnDragEnd(HierarchyItem item)
+    {
+        // Disable the scroll when popup is active
+        scrollRect.enabled = true;
+
+        // Set popup as selected (focus)
+        //EventSystem.current.SetSelectedGameObject(itemPopup);
+
+        // Enable popup
+        //itemPopup.SetActive(true);
+    }
+    public void SetToChildItem(HierarchyItem srcItem, HierarchyItem destItem)
+    {
+        if (srcItem == null || destItem == null)
+            return;
+        if (selectedItems.Contains(srcItem))
+        {
+            for (int i = 0; i < selectedItems.Count; i++)
+            {
+                HierarchyItem selectedItem = selectedItems[i];
+                if (selectedItem == destItem)
+                    continue;
+                if (root.RemoveItem(selectedItem) == false)
+                {
+                    Debug.LogError("Failed to remove item : " + srcItem.name);
+                    return;
+                }
+                destItem.AddChild(selectedItem);
+            }
+        }
+        else
+        { 
+            if (srcItem == destItem)
+                return;
+            if (root.RemoveItem(srcItem) == false)
+            {
+                Debug.LogError("Failed to remove item : " + srcItem.name);
+                return;
+            }
+            destItem.AddChild(srcItem);
+        }
+        data.Clear();
+        data = root.GetAll();
+        currentIndex = -1;
+        RebuildVisibleItems();
+    }
+    public void SetToNextSiblingItem(HierarchyItem srcItem, HierarchyItem destItem)
+    {
+        if (srcItem == null || destItem == null)
+            return;
+        if (selectedItems.Contains(srcItem))
+        {
+            for (int i = 0; i < selectedItems.Count; i++)
+            {
+                HierarchyItem selectedItem = selectedItems[i];
+                if (selectedItem == destItem)
+                    continue;
+                if (root.RemoveItem(selectedItem) == false)
+                {
+                    Debug.LogError("Failed to remove item : " + srcItem.name);
+                    return;
+                }
+                destItem.AddToNextSibling(selectedItem);
+            }
+        }
+        else
+        {
+            if (srcItem == destItem)
+                return;
+            if (root.RemoveItem(srcItem) == false)
+            {
+                Debug.LogError("Failed to remove item : " + srcItem.name);
+                return;
+            }
+            destItem.AddToNextSibling(srcItem);
+        }
+        data.Clear();
+        data = root.GetAll();
+        currentIndex = -1;
+        RebuildVisibleItems();
+    }
+    public void SetToPriorSiblingItem(HierarchyItem srcItem, HierarchyItem destItem)
+    {
+        if (srcItem == null || destItem == null)
+            return;
+        if (selectedItems.Contains(srcItem))
+        {
+            for (int i = 0; i < selectedItems.Count; i++)
+            {
+                HierarchyItem selectedItem = selectedItems[i];
+                if (selectedItem == destItem)
+                    continue;
+                if (root.RemoveItem(selectedItem) == false)
+                {
+                    Debug.LogError("Failed to remove item : " + srcItem.name);
+                    return;
+                }
+                destItem.AddToPriorSibling(selectedItem);
+            }
+        }
+        else
+        {
+            if (srcItem == destItem)
+                return;
+            if (root.RemoveItem(srcItem) == false)
+            {
+                Debug.LogError("Failed to remove item : " + srcItem.name);
+                return;
+            }
+            destItem.AddToPriorSibling(srcItem);
+        }
+        data.Clear();
+        data = root.GetAll();
+        currentIndex = -1;
+        RebuildVisibleItems();
     }
 }
