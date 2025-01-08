@@ -8,12 +8,11 @@ public class PooledScrollView : MonoBehaviour
     public RectTransform content;       // Content RectTransform of the ScrollView.
     public CustomScrollRect scrollRect;       // ScrollRect component.
     public GameObject itemPrefab;       // Prefab for scroll items.
-    public GameObject itemPopup;
     public Canvas canvas;
 
     private ObjectPool<ScrollItemUI> pool;  // Pool for UI items.
     private List<HierarchyItem> data = new List<HierarchyItem>();   // The list of hierarchy items.
-    private HierarchyItem root = new HierarchyItem("Root");
+    private HierarchyItem root = new HierarchyItem("Root", -1);
 
     private List<ScrollItemUI> activeItems = new List<ScrollItemUI>();
     private List<HierarchyItem> selectedItems = new List<HierarchyItem>();
@@ -72,6 +71,13 @@ public class PooledScrollView : MonoBehaviour
     {
         data.Clear();
         data = root.GetAll();
+        RebuildVisibleItems();
+    }
+    public void ResetData()
+    {
+        data.Clear();
+        data = root.GetAll();
+        currentIndex = -1;
         RebuildVisibleItems();
     }
     public void SetData(List<HierarchyItem> hierarchyData)
@@ -204,29 +210,7 @@ public class PooledScrollView : MonoBehaviour
     {
         currentIndex = -1;
         SetData();
-    }
-    public void OnDragStart(HierarchyItem item)
-    {
-        // Disable the scroll when popup is active
-        scrollRect.enabled = false; 
-
-        // Set popup as selected (focus)
-        //EventSystem.current.SetSelectedGameObject(itemPopup);
-
-        // Enable popup
-        //itemPopup.SetActive(true);
-    }
-    public void OnDragEnd(HierarchyItem item)
-    {
-        // Disable the scroll when popup is active
-        scrollRect.enabled = true;
-
-        // Set popup as selected (focus)
-        //EventSystem.current.SetSelectedGameObject(itemPopup);
-
-        // Enable popup
-        //itemPopup.SetActive(true);
-    }
+    } 
     public void SetToChildItem(HierarchyItem srcItem, HierarchyItem destItem)
     {
         if (srcItem == null || destItem == null)
@@ -236,31 +220,55 @@ public class PooledScrollView : MonoBehaviour
             for (int i = 0; i < selectedItems.Count; i++)
             {
                 HierarchyItem selectedItem = selectedItems[i];
-                if (selectedItem == destItem)
+                if (selectedItem == destItem || selectedItem.HasChildItem(destItem))
                     continue;
-                if (root.RemoveItem(selectedItem) == false)
-                {
-                    Debug.LogError("Failed to remove item : " + srcItem.name);
-                    return;
-                }
-                destItem.AddChild(selectedItem);
+                //root.RemoveItem(selectedItem);
+                //destItem.AddChild(selectedItem);
+
+                HierarchyItem oldParent = selectedItem.parent;
+                int oldIndex = selectedItem.GetSiblingIndex();
+                var command = new ActionCommand(
+                    () =>
+                    {
+                        root.RemoveItem(selectedItem);
+                        destItem.AddChild(selectedItem);
+                        ResetData();
+                    },
+                    () =>
+                    {
+                        root.RemoveItem(selectedItem);
+                        oldParent.AddChild(selectedItem, oldIndex);
+                        ResetData();
+                    });
+                UndoRedoManager.I.ExecuteCommand(command);
             }
         }
         else
-        { 
-            if (srcItem == destItem)
+        {
+            if (srcItem == destItem || srcItem.HasChildItem(destItem))
                 return;
-            if (root.RemoveItem(srcItem) == false)
-            {
-                Debug.LogError("Failed to remove item : " + srcItem.name);
-                return;
-            }
-            destItem.AddChild(srcItem);
+
+            //root.RemoveItem(srcItem);
+            //destItem.AddChild(srcItem);
+
+            HierarchyItem oldParent = srcItem.parent;
+            int oldIndex = srcItem.GetSiblingIndex();
+            var command = new ActionCommand(
+                () =>
+                {
+                    root.RemoveItem(srcItem);
+                    destItem.AddChild(srcItem);
+                    ResetData();
+                },
+                () =>
+                {
+                    root.RemoveItem(srcItem);
+                    oldParent.AddChild(srcItem, oldIndex);
+                    ResetData();
+                });
+            UndoRedoManager.I.ExecuteCommand(command);
         }
-        data.Clear();
-        data = root.GetAll();
-        currentIndex = -1;
-        RebuildVisibleItems();
+        //ResetData();
     }
     public void SetToNextSiblingItem(HierarchyItem srcItem, HierarchyItem destItem)
     {
@@ -271,7 +279,7 @@ public class PooledScrollView : MonoBehaviour
             for (int i = 0; i < selectedItems.Count; i++)
             {
                 HierarchyItem selectedItem = selectedItems[i];
-                if (selectedItem == destItem)
+                if (selectedItem == destItem || selectedItem.HasChildItem(destItem))
                     continue;
                 if (root.RemoveItem(selectedItem) == false)
                 {
@@ -283,7 +291,7 @@ public class PooledScrollView : MonoBehaviour
         }
         else
         {
-            if (srcItem == destItem)
+            if (srcItem == destItem || srcItem.HasChildItem(destItem))
                 return;
             if (root.RemoveItem(srcItem) == false)
             {
@@ -292,10 +300,7 @@ public class PooledScrollView : MonoBehaviour
             }
             destItem.AddToNextSibling(srcItem);
         }
-        data.Clear();
-        data = root.GetAll();
-        currentIndex = -1;
-        RebuildVisibleItems();
+        ResetData();
     }
     public void SetToPriorSiblingItem(HierarchyItem srcItem, HierarchyItem destItem)
     {
@@ -306,7 +311,7 @@ public class PooledScrollView : MonoBehaviour
             for (int i = 0; i < selectedItems.Count; i++)
             {
                 HierarchyItem selectedItem = selectedItems[i];
-                if (selectedItem == destItem)
+                if (selectedItem == destItem || selectedItem.HasChildItem(destItem))
                     continue;
                 if (root.RemoveItem(selectedItem) == false)
                 {
@@ -318,7 +323,7 @@ public class PooledScrollView : MonoBehaviour
         }
         else
         {
-            if (srcItem == destItem)
+            if (srcItem == destItem || srcItem.HasChildItem(destItem))
                 return;
             if (root.RemoveItem(srcItem) == false)
             {
@@ -327,9 +332,6 @@ public class PooledScrollView : MonoBehaviour
             }
             destItem.AddToPriorSibling(srcItem);
         }
-        data.Clear();
-        data = root.GetAll();
-        currentIndex = -1;
-        RebuildVisibleItems();
+        ResetData();
     }
 }

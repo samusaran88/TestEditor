@@ -4,20 +4,28 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
-public class PopupScrollViewItem : MonoBehaviour, IPointerUpHandler
+public class PopupScrollViewItem : MonoBehaviour
 {
-    public ScrollRect scrollRect;  
+    public CustomScrollRect scrollRect;
+    public TMP_Text text;
     Canvas canvas;
     // Start is called before the first frame update
     void Awake()
     {
         canvas = GetComponentInParent<Canvas>();
-    }
+        scrollRect.itemPopup = gameObject;
+        gameObject.SetActive(false);
+    } 
 
     // Update is called once per frame
     void Update()
     {
+        if (scrollRect.sourceItem != null)
+        {
+            text.text = scrollRect.sourceItem.name;
+        }
         // Position popup at the mouse position (convert screen point to UI point)
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvas.transform as RectTransform,
@@ -26,9 +34,5 @@ public class PopupScrollViewItem : MonoBehaviour, IPointerUpHandler
             out Vector2 pos
         );
         transform.position = canvas.transform.TransformPoint(pos);
-    }
-    public void OnPointerUp(PointerEventData eventData)
-    {
-        scrollRect.enabled = true;
-    }
+    } 
 }

@@ -153,15 +153,16 @@ public class ScrollItemUI : MonoBehaviour, IPointerClickHandler//, IBeginDragHan
     }
     public void ActivateLowerHighlight()
     {
-        if (currentItem == null) return;
-        if (currentItem.GetNextSibling() == null)
-        {
-            lowerLine.color = lineColor;
-        }
-        else
-        {
-            ActivateMidHighlight(); 
-        }
+        lowerLine.color = lineColor;
+        //if (currentItem == null) return;
+        //if (currentItem.GetNextSibling() == null)
+        //{
+        //    lowerLine.color = lineColor;
+        //}
+        //else
+        //{
+        //    ActivateMidHighlight(); 
+        //}
     }
     public void ActivateMidHighlight()
     {
@@ -172,103 +173,5 @@ public class ScrollItemUI : MonoBehaviour, IPointerClickHandler//, IBeginDragHan
         upperLine.color = Color.clear;
         lowerLine.color = Color.clear;
         highLight.SetActive(false);
-    }
-}
-public class HierarchyItem
-{
-    public string name;
-    public int layerNum;
-    public HierarchyItem parent;
-    public List<HierarchyItem> children;
-    public bool isExpanded = true; 
-    public HierarchyItem(string name)
-    {
-        this.name = name;
-        children = new List<HierarchyItem>();
-    }
-    public void AddChild(HierarchyItem item)
-    {
-        children.Add(item);
-        item.parent = this;
-        item.SetLayerNum();
-    }
-    public void AddToPriorSibling(HierarchyItem item)
-    {
-        if (parent == null) return;
-        int index = parent.children.FindIndex(x => x == this);
-        parent.children.Insert(index, item);
-        item.parent = parent;
-        item.SetLayerNum();
-    }
-    public void AddToNextSibling(HierarchyItem item)
-    {
-        if (parent == null) return;
-        int index = parent.children.FindIndex(x => x == this);
-        if (index == parent.children.Count - 1)
-        {
-            parent.AddChild(item);
-            return;
-        }
-        parent.children.Insert(index + 1, item);
-        item.parent = parent;
-        item.SetLayerNum();
-    }
-    public bool RemoveItem(HierarchyItem item)
-    {
-        if (children.Contains(item))
-        {
-            children.Remove(item);
-            return true;
-        }
-        foreach (HierarchyItem childItem in children)
-        {
-            if (childItem.RemoveItem(item))
-                return true;
-        }
-        return false;
-    }
-    public void SetLayerNum()
-    {
-        layerNum = parent.layerNum + 1;
-        foreach (HierarchyItem childItem in children)
-        {
-            childItem.SetLayerNum();
-        }
-    }
-    public List<HierarchyItem> GetAll()
-    {
-        List<HierarchyItem> items = new List<HierarchyItem>();
-        HierarchyItem node = GetNext();
-        while (node != null)
-        {
-            items.Add(node);
-            node = node.GetNext();
-        } 
-        return items;
-    }
-    public HierarchyItem GetNext()
-    {
-        if (children.Count > 0 && isExpanded) return children[0];
-        return parent.GetNext(this);
-    }
-    public HierarchyItem GetNext(HierarchyItem item)
-    {
-        int index = children.FindIndex(x => x == item);
-        if (index == children.Count - 1)
-        {
-            if (parent == null) return null;
-            return parent.GetNext(this);
-        }
-        return children[index + 1];
-    }
-    public HierarchyItem GetNextSibling()
-    {
-        if (parent == null) return null;
-        int index = parent.children.FindIndex(x => x == this);
-        if (index == parent.children.Count - 1)
-        {
-            return null; 
-        }
-        return parent.children[index + 1];
     }
 }

@@ -5,13 +5,14 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class CustomScrollRect : ScrollRect, IPointerDownHandler
+public class CustomScrollRect : ScrollRect, IPointerDownHandler, IPointerUpHandler
 {
     public bool passDragToChildren = true;
     public UnityEvent<HierarchyItem, HierarchyItem> setToChildItem;
     public UnityEvent<HierarchyItem, HierarchyItem> setToPriorSiblingItem;
     public UnityEvent<HierarchyItem, HierarchyItem> setToNextSiblingItem;
-    private HierarchyItem sourceItem;
+    public GameObject itemPopup;
+    public HierarchyItem sourceItem;
     private ScrollItemUI hoverItemUI;
     private bool IsPointerOverScrollView()
     {
@@ -52,10 +53,15 @@ public class CustomScrollRect : ScrollRect, IPointerDownHandler
     public void OnPointerDown(PointerEventData eventData)
     {
         ScrollItemUI itemUI = GetTargetItemUI(eventData); 
+        itemPopup.SetActive(true);
         if (itemUI != null)
         {
             sourceItem = itemUI.currentItem; 
         }
+    }
+    public void OnPointerUp(PointerEventData eventData)
+    { 
+        itemPopup.SetActive(false); 
     }
     public override void OnDrag(PointerEventData eventData)
     {
@@ -75,36 +81,22 @@ public class CustomScrollRect : ScrollRect, IPointerDownHandler
             );
 
             float rectHeight = itemRect.rect.height;  // Height of the item's RectTransform
-            float normalizedY = (localPoint.y + rectHeight / 2) / rectHeight;  // Normalize to 0 (bottom) to 1 (top)
-
-            Debug.Log($"Drop Position (Normalized): {normalizedY}");
+            float normalizedY = (localPoint.y + rectHeight / 2) / rectHeight;  // Normalize to 0 (bottom) to 1 (top) 
 
             // Check the drop zone: top, middle, or bottom
             if (normalizedY >= 0.8f)  // Upper 30%
-            {
-                Debug.Log("Dropped near the TOP of the item");
-                itemUI.ActivateUpperHighlight();
-                //OnDropAtTop(itemUI.currentItem);
+            { 
+                itemUI.ActivateUpperHighlight(); 
             }
             else if (normalizedY <= 0.2f)  // Lower 30%
-            {
-                Debug.Log("Dropped near the BOTTOM of the item");
-                itemUI.ActivateLowerHighlight();
-                //OnDropAtBottom(itemUI.currentItem);
+            { 
+                itemUI.ActivateLowerHighlight(); 
             }
             else  // Middle 40%
-            {
-                Debug.Log("Dropped in the MIDDLE of the item");
-                itemUI.ActivateMidHighlight();
-                //OnDropInMiddle(itemUI.currentItem);
+            { 
+                itemUI.ActivateMidHighlight(); 
             }
-            hoverItemUI = itemUI;
-            //HierarchyItem destItem = itemUI.currentItem;
-            //if (sourceItem != null)
-            //{
-            //    onDragEnd?.Invoke(sourceItem, destItem);
-            //    sourceItem = null;
-            //}
+            hoverItemUI = itemUI; 
         }
         if (!passDragToChildren)
         {
@@ -115,8 +107,9 @@ public class CustomScrollRect : ScrollRect, IPointerDownHandler
     public override void OnEndDrag(PointerEventData eventData)
     {
         if (hoverItemUI != null) hoverItemUI.DeactivateAllHighlights();
+        itemPopup.SetActive(false);
         ScrollItemUI itemUI = GetTargetItemUI(eventData); 
-        if (itemUI != null)
+        if (itemUI != null && sourceItem != null)
         {
             RectTransform itemRect = itemUI.GetComponent<RectTransform>();  // Get RectTransform of the item
             Vector2 localPoint;
@@ -134,41 +127,23 @@ public class CustomScrollRect : ScrollRect, IPointerDownHandler
 
             hoverItemUI = itemUI;
             HierarchyItem destItem = itemUI.currentItem;
+
             if (destItem == null)
                 return;
 
             if (normalizedY >= 0.8f)
             {
-                if (sourceItem != null)
-                {
-                    setToPriorSiblingItem?.Invoke(sourceItem, destItem);
-                    sourceItem = null;
-                }
+                setToPriorSiblingItem?.Invoke(sourceItem, destItem);
             }
-            else if (normalizedY <= 0.2f)  
+            else if (normalizedY <= 0.2f)
             {
-                if (destItem.GetNextSibling() == null)
-                {
-                    if (sourceItem != null)
-                    {
-                        setToNextSiblingItem?.Invoke(sourceItem, destItem);
-                        sourceItem = null;
-                    }
-                }
-                else if (sourceItem != null)
-                {
-                    setToChildItem?.Invoke(sourceItem, destItem);
-                    sourceItem = null;
-                }
+                setToNextSiblingItem?.Invoke(sourceItem, destItem); 
             }
-            else  
+            else
             {
-                if (sourceItem != null)
-                {
-                    setToChildItem?.Invoke(sourceItem, destItem);
-                    sourceItem = null;
-                }
+                setToChildItem?.Invoke(sourceItem, destItem); 
             }
+            sourceItem = null;
         }
         if (!passDragToChildren)
         {
