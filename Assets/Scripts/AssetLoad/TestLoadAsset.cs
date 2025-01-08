@@ -10,7 +10,7 @@ public class TestLoadAsset : MonoBehaviour
         get
         {
 #if UNITY_EDITOR
-            return $"{Application.persistentDataPath}/fbx.FBX";
+            return $"{Application.persistentDataPath}/Robot.FBX";
 #else
                 return "Models/TriLibSampleModel.obj";
 #endif
