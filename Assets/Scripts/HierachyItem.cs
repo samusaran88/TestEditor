@@ -20,9 +20,9 @@ public class HierarchyItem
         this.layerNum = layerNum;
         children = new List<HierarchyItem>();
     }
-    public void AddChild(HierarchyItem item, int index = 0)
+    public void AddChild(HierarchyItem item, int index = -1)
     {
-        if (index == 0 || index >= children.Count) children.Add(item);
+        if (index < 0 || index >= children.Count) children.Add(item);
         else children.Insert(index, item);
         item.parent = this;
         item.ResetLayerNum();

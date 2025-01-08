@@ -14,6 +14,7 @@ public class CustomScrollRect : ScrollRect, IPointerDownHandler, IPointerUpHandl
     public GameObject itemPopup;
     public HierarchyItem sourceItem;
     private ScrollItemUI hoverItemUI;
+    private Coroutine coroutinePendPopup;
     private bool IsPointerOverScrollView()
     {
         return RectTransformUtility.RectangleContainsScreenPoint(
@@ -52,15 +53,16 @@ public class CustomScrollRect : ScrollRect, IPointerDownHandler, IPointerUpHandl
     }
     public void OnPointerDown(PointerEventData eventData)
     {
-        ScrollItemUI itemUI = GetTargetItemUI(eventData); 
-        itemPopup.SetActive(true);
+        ScrollItemUI itemUI = GetTargetItemUI(eventData);
+        coroutinePendPopup = StartCoroutine(CoroutinePendPopup());
         if (itemUI != null)
         {
             sourceItem = itemUI.currentItem; 
         }
     }
     public void OnPointerUp(PointerEventData eventData)
-    { 
+    {
+        StopCoroutine(coroutinePendPopup);
         itemPopup.SetActive(false); 
     }
     public override void OnDrag(PointerEventData eventData)
@@ -107,6 +109,7 @@ public class CustomScrollRect : ScrollRect, IPointerDownHandler, IPointerUpHandl
     public override void OnEndDrag(PointerEventData eventData)
     {
         if (hoverItemUI != null) hoverItemUI.DeactivateAllHighlights();
+        StopCoroutine(coroutinePendPopup);
         itemPopup.SetActive(false);
         ScrollItemUI itemUI = GetTargetItemUI(eventData); 
         if (itemUI != null && sourceItem != null)
@@ -170,5 +173,11 @@ public class CustomScrollRect : ScrollRect, IPointerDownHandler, IPointerUpHandl
         }
 
         return null;
+    }
+    IEnumerator CoroutinePendPopup()
+    {
+        yield return new WaitForSeconds(0.1f);
+        itemPopup.SetActive(true);
+        yield return null;
     }
 }

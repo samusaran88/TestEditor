@@ -221,9 +221,7 @@ public class PooledScrollView : MonoBehaviour
             {
                 HierarchyItem selectedItem = selectedItems[i];
                 if (selectedItem == destItem || selectedItem.HasChildItem(destItem))
-                    continue;
-                //root.RemoveItem(selectedItem);
-                //destItem.AddChild(selectedItem);
+                    continue; 
 
                 HierarchyItem oldParent = selectedItem.parent;
                 int oldIndex = selectedItem.GetSiblingIndex();
@@ -246,10 +244,7 @@ public class PooledScrollView : MonoBehaviour
         else
         {
             if (srcItem == destItem || srcItem.HasChildItem(destItem))
-                return;
-
-            //root.RemoveItem(srcItem);
-            //destItem.AddChild(srcItem);
+                return; 
 
             HierarchyItem oldParent = srcItem.parent;
             int oldIndex = srcItem.GetSiblingIndex();
@@ -281,26 +276,54 @@ public class PooledScrollView : MonoBehaviour
                 HierarchyItem selectedItem = selectedItems[i];
                 if (selectedItem == destItem || selectedItem.HasChildItem(destItem))
                     continue;
-                if (root.RemoveItem(selectedItem) == false)
-                {
-                    Debug.LogError("Failed to remove item : " + srcItem.name);
-                    return;
-                }
-                destItem.AddToNextSibling(selectedItem);
+
+                HierarchyItem oldParent = selectedItem.parent;
+                int oldIndex = selectedItem.GetSiblingIndex();
+                var command = new ActionCommand(
+                    () =>
+                    {
+                        root.RemoveItem(selectedItem);
+                        destItem.AddToNextSibling(selectedItem);
+                        ResetData();
+                    },
+                    () =>
+                    {
+                        root.RemoveItem(selectedItem);
+                        oldParent.AddChild(selectedItem, oldIndex);
+                        ResetData();
+                    });
+                UndoRedoManager.I.ExecuteCommand(command);
+
+                //root.RemoveItem(selectedItem);
+                //destItem.AddToNextSibling(selectedItem);
             }
         }
         else
         {
             if (srcItem == destItem || srcItem.HasChildItem(destItem))
                 return;
-            if (root.RemoveItem(srcItem) == false)
-            {
-                Debug.LogError("Failed to remove item : " + srcItem.name);
-                return;
-            }
-            destItem.AddToNextSibling(srcItem);
+
+            HierarchyItem oldParent = srcItem.parent;
+            int oldIndex = srcItem.GetSiblingIndex();
+            var command = new ActionCommand(
+                () =>
+                {
+                    root.RemoveItem(srcItem);
+                    destItem.AddToNextSibling(srcItem);
+                    ResetData();
+                },
+                () =>
+                {
+                    root.RemoveItem(srcItem);
+                    oldParent.AddChild(srcItem, oldIndex);
+                    ResetData();
+                });
+            UndoRedoManager.I.ExecuteCommand(command);
+
+            //root.RemoveItem(srcItem);
+            //destItem.AddToNextSibling(srcItem);
         }
-        ResetData();
+        //ResetData();
     }
     public void SetToPriorSiblingItem(HierarchyItem srcItem, HierarchyItem destItem)
     {
@@ -313,25 +336,53 @@ public class PooledScrollView : MonoBehaviour
                 HierarchyItem selectedItem = selectedItems[i];
                 if (selectedItem == destItem || selectedItem.HasChildItem(destItem))
                     continue;
-                if (root.RemoveItem(selectedItem) == false)
-                {
-                    Debug.LogError("Failed to remove item : " + srcItem.name);
-                    return;
-                }
-                destItem.AddToPriorSibling(selectedItem);
+
+                HierarchyItem oldParent = selectedItem.parent;
+                int oldIndex = selectedItem.GetSiblingIndex();
+                var command = new ActionCommand(
+                    () =>
+                    {
+                        root.RemoveItem(selectedItem);
+                        destItem.AddToPriorSibling(selectedItem);
+                        ResetData();
+                    },
+                    () =>
+                    {
+                        root.RemoveItem(selectedItem);
+                        oldParent.AddChild(selectedItem, oldIndex);
+                        ResetData();
+                    });
+                UndoRedoManager.I.ExecuteCommand(command);
+
+                //root.RemoveItem(selectedItem);
+                //destItem.AddToPriorSibling(selectedItem);
             }
         }
         else
         {
             if (srcItem == destItem || srcItem.HasChildItem(destItem))
                 return;
-            if (root.RemoveItem(srcItem) == false)
-            {
-                Debug.LogError("Failed to remove item : " + srcItem.name);
-                return;
-            }
-            destItem.AddToPriorSibling(srcItem);
+
+            HierarchyItem oldParent = srcItem.parent;
+            int oldIndex = srcItem.GetSiblingIndex();
+            var command = new ActionCommand(
+                () =>
+                {
+                    root.RemoveItem(srcItem);
+                    destItem.AddToPriorSibling(srcItem);
+                    ResetData();
+                },
+                () =>
+                {
+                    root.RemoveItem(srcItem);
+                    oldParent.AddChild(srcItem, oldIndex);
+                    ResetData();
+                });
+            UndoRedoManager.I.ExecuteCommand(command);
+
+            //root.RemoveItem(srcItem);
+            //destItem.AddToPriorSibling(srcItem);
         }
-        ResetData();
+        //ResetData();
     }
 }
