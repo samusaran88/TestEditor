@@ -392,7 +392,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   identifier: 
   password: 
-  sharedMaterial: {fileID: 2100000, guid: 9e555475df5d23440bc1e1cea8f1734e, type: 2}
+  sharedMaterial:
+    sharedMaterial: {fileID: 2100000, guid: 9e555475df5d23440bc1e1cea8f1734e, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
